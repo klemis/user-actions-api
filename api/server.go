@@ -24,6 +24,7 @@ func NewServer(listenAddr string, store storage.Storage) *Server {
 
 func (s *Server) Start() error {
 	s.router.GET("/user/:id", s.handleGetUserByID)
+	s.router.GET("/users/:id/actions/count", s.handleGetActionCountByUserID)
 
 	return s.router.Run(s.listenAddr)
 }
@@ -44,4 +45,18 @@ func (s *Server) handleGetUserByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
+}
+
+// handleGetActionCountByUserID handles getting the total number of actions for a given user ID.
+func (s *Server) handleGetActionCountByUserID(c *gin.Context) {
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Retrieve action count.
+	count := s.store.CountActionsByUserID(userID)
+
+	c.JSON(http.StatusOK, gin.H{"count": count})
 }

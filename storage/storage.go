@@ -12,6 +12,7 @@ import (
 // Storage interface for accessing user and action data.
 type Storage interface {
 	GetUser(int) *types.User
+	CountActionsByUserID(userID int) int
 }
 
 // InMemoryStorage implements the Storage interface with in-memory data.
@@ -49,6 +50,21 @@ func (s *InMemoryStorage) GetUser(id int) *types.User {
 	}
 
 	return &user
+}
+
+// CountActionsByUserID returns the count of actions for a specific user ID.
+func (s *InMemoryStorage) CountActionsByUserID(userID int) int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	count := 0
+	for _, action := range s.actions {
+		if action.UserID == userID {
+			count++
+		}
+	}
+
+	return count
 }
 
 // loadUsers reads and parses users.json file.
