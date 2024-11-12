@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"sync"
 
 	"github.com/klemis/user-actions-api/types"
@@ -13,6 +14,7 @@ import (
 type Storage interface {
 	GetUser(int) *types.User
 	CountActionsByUserID(userID int) int
+	GetActions() []types.Action
 }
 
 // InMemoryStorage implements the Storage interface with in-memory data.
@@ -65,6 +67,27 @@ func (s *InMemoryStorage) CountActionsByUserID(userID int) int {
 	}
 
 	return count
+}
+
+func (s *InMemoryStorage) GetActions() []types.Action {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	// Convert the map to a slice for sorting.
+	actions := make([]types.Action, 0, len(s.actions))
+	for _, action := range s.actions {
+		actions = append(actions, action)
+	}
+
+	// Sort actions by user and createdAt.
+	sort.Slice(actions, func(i, j int) bool {
+		if actions[i].UserID == actions[j].UserID {
+			return actions[i].CreatedAt.Before(actions[j].CreatedAt)
+		}
+		return actions[i].UserID < actions[j].UserID
+	})
+
+	return actions
 }
 
 // loadUsers reads and parses users.json file.

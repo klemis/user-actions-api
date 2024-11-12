@@ -14,3 +14,6 @@ type Action struct {
 	UserID    int       `json:"userId"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+// ActionsProbalibity holds the probability for each possible next action.
+type ActionsProbalibity map[string]float64

@@ -1,11 +1,13 @@
 package api
 
 import (
+	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/klemis/user-actions-api/storage"
+	"github.com/klemis/user-actions-api/types"
 )
 
 type Server struct {
@@ -23,8 +25,9 @@ func NewServer(listenAddr string, store storage.Storage) *Server {
 }
 
 func (s *Server) Start() error {
-	s.router.GET("/user/:id", s.handleGetUserByID)
+	s.router.GET("/users/:id", s.handleGetUserByID)
 	s.router.GET("/users/:id/actions/count", s.handleGetActionCountByUserID)
+	s.router.GET("/actions/:type/next-probalility", s.handleGetNextActionProbability)
 
 	return s.router.Run(s.listenAddr)
 }
@@ -59,4 +62,36 @@ func (s *Server) handleGetActionCountByUserID(c *gin.Context) {
 	count := s.store.CountActionsByUserID(userID)
 
 	c.JSON(http.StatusOK, gin.H{"count": count})
+}
+
+func (s *Server) handleGetNextActionProbability(c *gin.Context) {
+	actionType := c.Param("type")
+	if actionType == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Action type is required"})
+		return
+	}
+
+	// Retrieve all actions sorted by user and createdAt.
+	actions := s.store.GetActions()
+
+	actionCounts := map[string]int{}
+	totalNextActions := 0
+
+	// Count next actions after each specified action type.
+	for i := 0; i < len(actions)-1; i++ {
+		if actions[i].Type == actionType && actions[i].UserID == actions[i+1].UserID {
+			nextAction := actions[i+1].Type
+			actionCounts[nextAction]++
+			totalNextActions++
+		}
+	}
+
+	// Calculate probabilities.
+	var result = make(types.ActionsProbalibity)
+	for action, count := range actionCounts {
+		probability := float64(count) / float64(totalNextActions)
+		result[action] = math.Round(probability*100) / 100
+	}
+
+	c.JSON(http.StatusOK, result)
 }
