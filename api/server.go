@@ -26,6 +26,7 @@ func NewServer(listenAddr string, store storage.Storage) *Server {
 
 func (s *Server) Start() error {
 	s.router.GET("/users/:id", s.handleGetUserByID)
+	s.router.GET("/users/referal-index", s.handleGetReferralIndex)
 	s.router.GET("/users/:id/actions/count", s.handleGetActionCountByUserID)
 	s.router.GET("/actions/:type/next-probalility", s.handleGetNextActionProbability)
 
@@ -94,4 +95,46 @@ func (s *Server) handleGetNextActionProbability(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+func (s *Server) handleGetReferralIndex(c *gin.Context) {
+	// Retrieve all actions.
+	actions := s.store.GetActions()
+
+	// Create a mapping of users to the IDs of users they referred.
+	referrals := make(types.Referral)
+	for _, action := range actions {
+		if action.Type == "REFER_USER" && action.TargetUser != 0 {
+			referrals[action.UserID] = append(referrals[action.UserID], action.TargetUser)
+		}
+	}
+
+	// Calculate referral index for each user.
+	referralIndex := make(types.ReferralIndex)
+	for userId := range referrals {
+		visited := make(map[int]bool)
+
+		var dfs func(int)
+		dfs = func(user int) {
+			if visited[user] {
+				return
+			}
+
+			visited[user] = true
+			// Traverse each referral made by the current user.
+			for _, referredUser := range referrals[user] {
+				dfs(referredUser)
+			}
+
+			referralIndex[userId]++
+		}
+		// Start DFS on each referred user in the referrals list for userId.
+		for _, referredUser := range referrals[userId] {
+			dfs(referredUser)
+		}
+	}
+
+	// TODO: display also users with 0 value?
+
+	c.JSON(http.StatusOK, referralIndex)
 }
