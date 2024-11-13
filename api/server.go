@@ -100,6 +100,10 @@ func (s *Server) handleGetNextActionProbability(c *gin.Context) {
 func (s *Server) handleGetReferralIndex(c *gin.Context) {
 	// Retrieve all actions.
 	actions := s.store.GetActions()
+	if len(actions) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No actions found"})
+		return
+	}
 
 	// Create a mapping of users to the IDs of users they referred.
 	referrals := make(types.Referral)
@@ -107,6 +111,11 @@ func (s *Server) handleGetReferralIndex(c *gin.Context) {
 		if action.Type == "REFER_USER" && action.TargetUser != 0 {
 			referrals[action.UserID] = append(referrals[action.UserID], action.TargetUser)
 		}
+	}
+
+	if len(referrals) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No referrals found"})
+		return
 	}
 
 	// Calculate referral index for each user.

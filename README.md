@@ -89,5 +89,6 @@
        "3": 7
      }
      ```
-   
+
+    - **Error (StatusNotFound)**: If the action with the referal type does not exist or there is no actions.  
 ---

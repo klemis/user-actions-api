@@ -239,3 +239,63 @@ func TestHandleGetNextActionProbability(t *testing.T) {
 		})
 	}
 }
+
+// TestHandleGetReferralIndex tests the handleGetReferralIndex endpoint.
+func TestHandleGetReferralIndex(t *testing.T) {
+	tests := []struct {
+		name           string
+		mockActions    []types.Action
+		expectedStatus int
+		expectedBody   string
+	}{
+
+		{
+			name:           "No actions",
+			mockActions:    []types.Action{},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"error": "No actions found"}`,
+		},
+		{
+			name: "No referrals",
+			mockActions: []types.Action{
+				{ID: 1, UserID: 1, Type: "WELCOME", TargetUser: 2},
+				{ID: 2, UserID: 2, Type: "ADD_CONTACT", TargetUser: 3},
+			},
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"error": "No referrals found"}`,
+		},
+		{
+			name: "Referral index calculation",
+			mockActions: []types.Action{
+				{ID: 1, UserID: 1, Type: "REFER_USER", TargetUser: 2},
+				{ID: 2, UserID: 2, Type: "REFER_USER", TargetUser: 3},
+				{ID: 3, UserID: 3, Type: "REFER_USER", TargetUser: 4},
+				{ID: 4, UserID: 1, Type: "REFER_USER", TargetUser: 5},
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"1": 4, "2": 2, "3": 1}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockStore := &MockStorage{}
+			server := &Server{store: mockStore}
+
+			gin.SetMode(gin.TestMode)
+			router := gin.Default()
+			router.GET("/users/referal-index", server.handleGetReferralIndex)
+
+			mockStore.On("GetActions").Return(tt.mockActions)
+
+			req, _ := http.NewRequest("GET", "/users/referal-index", nil)
+			response := httptest.NewRecorder()
+
+			router.ServeHTTP(response, req)
+
+			assert.Equal(t, tt.expectedStatus, response.Code)
+
+			assert.JSONEq(t, tt.expectedBody, response.Body.String())
+		})
+	}
+}
