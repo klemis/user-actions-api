@@ -248,7 +248,6 @@ func TestHandleGetReferralIndex(t *testing.T) {
 		expectedStatus int
 		expectedBody   string
 	}{
-
 		{
 			name:           "No actions",
 			mockActions:    []types.Action{},

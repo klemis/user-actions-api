@@ -75,7 +75,7 @@ func (s *Server) handleGetNextActionProbability(c *gin.Context) {
 	// Retrieve all actions sorted by user and createdAt.
 	actions := s.store.GetActions()
 
-	actionCounts := map[string]int{}
+	actionCounts := make(map[string]int)
 	totalNextActions := 0
 
 	// Count next actions after each specified action type.

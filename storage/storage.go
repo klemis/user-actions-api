@@ -20,7 +20,7 @@ type Storage interface {
 // InMemoryStorage implements the Storage interface with in-memory data.
 type InMemoryStorage struct {
 	users   map[int]types.User
-	actions map[int]types.Action
+	actions []types.Action
 	mu      sync.RWMutex
 }
 
@@ -28,7 +28,7 @@ type InMemoryStorage struct {
 func NewInMemoryStorage(userFile, actionFile string) (Storage, error) {
 	storage := &InMemoryStorage{
 		users:   make(map[int]types.User),
-		actions: make(map[int]types.Action),
+		actions: []types.Action{},
 	}
 
 	if err := storage.loadUsers(userFile); err != nil {
@@ -73,22 +73,32 @@ func (s *InMemoryStorage) GetActions() []types.Action {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Convert the map to a slice for sorting.
-	actions := make([]types.Action, 0, len(s.actions))
-	for _, action := range s.actions {
-		actions = append(actions, action)
-	}
+	// Return a copy of the slice to prevent external modification.
+	actionsCopy := make([]types.Action, len(s.actions))
+	copy(actionsCopy, s.actions)
 
-	// Sort actions by user and createdAt.
-	sort.Slice(actions, func(i, j int) bool {
-		if actions[i].UserID == actions[j].UserID {
-			return actions[i].CreatedAt.Before(actions[j].CreatedAt)
-		}
-		return actions[i].UserID < actions[j].UserID
-	})
-
-	return actions
+	return actionsCopy
 }
+
+// CreateAction inserts a new action into the actions slice while maintaining the sorted order.
+// The function uses a binary search to determine the correct position for insertion.
+// This ensures the actions slice remains sorted by UserID and CreatedAt.
+
+// func (s *InMemoryStorage) CreateAction(action types.Action) {
+// 	s.mu.Lock()
+// 	defer s.mu.Unlock()
+
+// 	// Find the appropriate index to insert the new action.
+// 	idx := sort.Search(len(s.actions), func(i int) bool {
+// 		if s.actions[i].UserID == action.UserID {
+// 			return s.actions[i].CreatedAt.After(action.CreatedAt)
+// 		}
+// 		return s.actions[i].UserID > action.UserID
+// 	})
+
+// 	// Insert the new action while maintaining sorted order.
+// 	s.actions = append(s.actions[:idx], append([]types.Action{action}, s.actions[idx:]...)...)
+// }
 
 // loadUsers reads and parses users.json file.
 func (s *InMemoryStorage) loadUsers(filename string) error {
@@ -123,11 +133,17 @@ func (s *InMemoryStorage) loadActions(filename string) error {
 		return err
 	}
 
+	// Sort actions by user and createdAt before storing them.
+	sort.Slice(actions, func(i, j int) bool {
+		if actions[i].UserID == actions[j].UserID {
+			return actions[i].CreatedAt.Before(actions[j].CreatedAt)
+		}
+		return actions[i].UserID < actions[j].UserID
+	})
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for _, action := range actions {
-		s.actions[action.ID] = action
-	}
+	s.actions = actions
 
 	return nil
 }
