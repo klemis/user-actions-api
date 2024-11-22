@@ -89,6 +89,8 @@ func TestHandleGetUserByID(t *testing.T) {
 	// Loop through each test case.
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			id, err := strconv.Atoi(tt.userID)
 			if err == nil {
 				mockStore.On("GetUser", id).Return(tt.mockReturn)
@@ -153,6 +155,8 @@ func TestHandleGetActionCountByUserID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			id, err := strconv.Atoi(tt.userID)
 			if err == nil {
 				mockStore.On("CountActionsByUserID", id).Return(tt.mockReturn)
@@ -226,6 +230,8 @@ func TestHandleGetNextActionProbability(t *testing.T) {
 	// Loop through each test case.
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			mockStore.On("GetActions").Return(actions)
 
 			req, _ := http.NewRequest("GET", "/actions/"+tt.actionType+"/next-probability", nil)
@@ -278,6 +284,8 @@ func TestHandleGetReferralIndex(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			mockStore := &MockStorage{}
 			server := &Server{store: mockStore}
 

@@ -4,7 +4,7 @@ run:
 	go run main.go -listenaddr=:8080
 
 test:
-	go test ./...
+	go test -v ./...
 
 build:
 	$(GO) build -o $(BINARY_NAME)

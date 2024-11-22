@@ -42,6 +42,8 @@ func TestGetUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			storage := &inMemoryStorage{
 				users: tt.users,
 				mu:    sync.RWMutex{},
@@ -83,6 +85,8 @@ func TestCountActionsByUserID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			storage := &inMemoryStorage{
 				actions: tt.actions,
 				mu:      sync.RWMutex{},
@@ -127,6 +131,8 @@ func TestGetActions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			storage := &inMemoryStorage{
 				actions: tt.actions,
 				mu:      sync.RWMutex{},
@@ -184,6 +190,8 @@ func TestLoadActions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel() // Enable parallel execution
+
 			if tt.mockActions != nil {
 				mockActions, err := json.Marshal(tt.mockActions)
 				if err != nil {
