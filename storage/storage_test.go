@@ -42,7 +42,7 @@ func TestGetUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storage := &InMemoryStorage{
+			storage := &inMemoryStorage{
 				users: tt.users,
 				mu:    sync.RWMutex{},
 			}
@@ -83,7 +83,7 @@ func TestCountActionsByUserID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storage := &InMemoryStorage{
+			storage := &inMemoryStorage{
 				actions: tt.actions,
 				mu:      sync.RWMutex{},
 			}
@@ -127,7 +127,7 @@ func TestGetActions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storage := &InMemoryStorage{
+			storage := &inMemoryStorage{
 				actions: tt.actions,
 				mu:      sync.RWMutex{},
 			}
@@ -202,7 +202,7 @@ func TestLoadActions(t *testing.T) {
 
 			defer os.Remove(tt.inputFile)
 
-			storage := &InMemoryStorage{}
+			storage := &inMemoryStorage{}
 			err := storage.loadActions(tt.inputFile)
 
 			if tt.expectErr {

@@ -17,8 +17,8 @@ type Storage interface {
 	GetActions() []types.Action
 }
 
-// InMemoryStorage implements the Storage interface with in-memory data.
-type InMemoryStorage struct {
+// inMemoryStorage implements the Storage interface with in-memory data.
+type inMemoryStorage struct {
 	users   map[int]types.User
 	actions []types.Action
 	mu      sync.RWMutex
@@ -26,7 +26,7 @@ type InMemoryStorage struct {
 
 // NewInMemoryStorage loads data from JSON files and initializes storage.
 func NewInMemoryStorage(userFile, actionFile string) (Storage, error) {
-	storage := &InMemoryStorage{
+	storage := &inMemoryStorage{
 		users:   make(map[int]types.User),
 		actions: []types.Action{},
 	}
@@ -42,7 +42,7 @@ func NewInMemoryStorage(userFile, actionFile string) (Storage, error) {
 }
 
 // Get retrieves a user by ID.
-func (s *InMemoryStorage) GetUser(id int) *types.User {
+func (s *inMemoryStorage) GetUser(id int) *types.User {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -51,11 +51,14 @@ func (s *InMemoryStorage) GetUser(id int) *types.User {
 		return nil
 	}
 
-	return &user
+	// Return a copy of the user to prevent modification of the data.
+	userCopy := user
+
+	return &userCopy
 }
 
 // CountActionsByUserID returns the count of actions for a specific user ID.
-func (s *InMemoryStorage) CountActionsByUserID(userID int) int {
+func (s *inMemoryStorage) CountActionsByUserID(userID int) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -69,7 +72,7 @@ func (s *InMemoryStorage) CountActionsByUserID(userID int) int {
 	return count
 }
 
-func (s *InMemoryStorage) GetActions() []types.Action {
+func (s *inMemoryStorage) GetActions() []types.Action {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -101,7 +104,7 @@ func (s *InMemoryStorage) GetActions() []types.Action {
 // }
 
 // loadUsers reads and parses users.json file.
-func (s *InMemoryStorage) loadUsers(filename string) error {
+func (s *inMemoryStorage) loadUsers(filename string) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -122,7 +125,7 @@ func (s *InMemoryStorage) loadUsers(filename string) error {
 }
 
 // loadActions reads and parses actions.json file.
-func (s *InMemoryStorage) loadActions(filename string) error {
+func (s *inMemoryStorage) loadActions(filename string) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
